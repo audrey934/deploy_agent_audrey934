@@ -1,13 +1,13 @@
 #!/bin/bash
 
 #Python Health Check: Verification of Python3 installation
-echo "Performing Python health check..."
+echo "Python3 installation validation"
 
 if command -v python3; then
     echo " Python3 is installed."
     python3 --version
 else
-    echo "Python3 is NOT installed. Please install Python3 before running this script."
+    echo "Python3 is missing. Install python3 to proceed!"
     exit 1
 fi
 
@@ -17,16 +17,16 @@ echo "Provide name of your directory:"
 read name
 BASE_DIR="attendance_tracker_$name"
 
-#Setting the signla trap
+#Setting the signal trap
 trap ctrl_c INT
 
 ctrl_c() {
-    echo -e "\n[!] Script interrupted by user (SIGINT/Ctrl+C)."
+    echo  " Script Interrupted!!"
 
     if [ -d "$BASE_DIR"  ]; then
         echo "Archiving current project directory..."
-        tar -czf "${BASE_DIR}_archive.tar.gz" "$BASE_DIR"
-        echo "Archive created: ${BASE_DIR}_archive.tar.gz"
+        tar -czf "${BASE_DIR}_archive" "$BASE_DIR"
+        echo "Archive created: ${BASE_DIR}_archive"
 
         echo "Cleaning up incomplete directory..."
         rm -rf "$BASE_DIR"
@@ -47,28 +47,19 @@ touch "$BASE_DIR/Helpers/assets.csv"
 touch "$BASE_DIR/Helpers/config.json"
 touch "$BASE_DIR/reports/reports.log"
 
-#Checking Directory structure using array and for loop
+#Checking Directory structure
 
-dirs=("$BASE_DIR" "$BASE_DIR/Helpers" "$BASE_DIR/reports")
-files=("$BASE_DIR/attendance_checker.py" "$BASE_DIR/Helpers/assets.csv" "$BASE_DIR/Helpers/config.json" "$BASE_DIR/reports/reports.log")
+echo "Checking directory structure ..."
 
-for d in "${dirs[@]}"; do
-    if [ -d "$d" ]; then
-        echo "Directory exists: $d"
-    else
-        echo "Directory missing: $d – creating now"
-        mkdir -p "$d"
-    fi
-done
+if [ -f "$BASE_DIR/attendance_checker.py" ] &&
+   [ -f "$BASE_DIR/Helpers/assets.csv" ] &&
+   [ -f "$BASE_DIR/Helpers/config.json" ] &&
+   [ -f "$BASE_DIR/reports/reports.log" ]; then
 
-for f in "${files[@]}"; do
-    if [ -f "$f" ]; then
-        echo "File exists: $f"
-    else
-        echo "File missing: $f – creating now"
-        touch "$f"
-    fi
-done
+    echo "Project setup successfull!"
+else
+    echo "Project setup failed! Incorrect directory structure."
+fi
 
 
 cat << EOF > "$BASE_DIR/attendance_checker.py" 
