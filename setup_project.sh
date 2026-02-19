@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#Python Health Check: Verification of Python3 installation
-echo "Python3 installation validation"
+#Lets's verify if python3 is installed
+echo "Let's verify python3 installation"
 
 if command -v python3; then
     echo " Python3 is installed."
@@ -11,11 +11,20 @@ else
     exit 1
 fi
 
-#Asking user input for directory name and variable assignment
+#Asking user input for naming directory
 
 echo "Provide name of your directory:"
 read name
-BASE_DIR="attendance_tracker_$name"
+
+main_dir="attendance_tracker_$name"
+
+while [ -d "$main_dir" ]; do
+    echo "There is another project with the same name. Enter a new name:"
+    read name
+    main_dir="attendance_tracker_$name"
+done
+
+mkdir -p "$main_dir"
 
 #Setting the signal trap
 trap ctrl_c INT
@@ -23,13 +32,13 @@ trap ctrl_c INT
 ctrl_c() {
     echo  " Script Interrupted!!"
 
-    if [ -d "$BASE_DIR"  ]; then
+    if [ -d "$main_dir"  ]; then
         echo "Archiving current project directory..."
-        tar -czf "${BASE_DIR}_archive" "$BASE_DIR"
-        echo "Archive created: ${BASE_DIR}_archive"
+        tar -czf "${main_dir}_archive" "$main_dir"
+        echo "Archive created: ${main_dir}_archive"
 
         echo "Cleaning up incomplete directory..."
-        rm -rf "$BASE_DIR"
+        rm -rf "$main_dir"
         echo "Incomplete project directory deleted."
     fi
 
@@ -38,31 +47,12 @@ ctrl_c() {
 
 #Creating directories and files according to directory structure
 
-mkdir "$BASE_DIR"
-mkdir "$BASE_DIR/Helpers"
-mkdir "$BASE_DIR/reports"
-
-touch "$BASE_DIR/attendance_checker.py"
-touch "$BASE_DIR/Helpers/assets.csv"
-touch "$BASE_DIR/Helpers/config.json"
-touch "$BASE_DIR/reports/reports.log"
-
-#Checking Directory structure
-
-echo "Checking directory structure ..."
-
-if [ -f "$BASE_DIR/attendance_checker.py" ] &&
-   [ -f "$BASE_DIR/Helpers/assets.csv" ] &&
-   [ -f "$BASE_DIR/Helpers/config.json" ] &&
-   [ -f "$BASE_DIR/reports/reports.log" ]; then
-
-    echo "Project setup successfull!"
-else
-    echo "Project setup failed! Incorrect directory structure."
-fi
+mkdir -p "$main_dir"
+mkdir -p "$main_dir/Helpers"
+mkdir -p "$main_dir/reports"
 
 
-cat << EOF > "$BASE_DIR/attendance_checker.py" 
+cat << EOF > "$main_dir/attendance_checker.py" 
 import csv
 import json
 import os
@@ -110,7 +100,7 @@ if __name__ == "__main__":
     run_attendance_check()
 EOF
 
-cat << EOF > "$BASE_DIR/Helpers/assets.csv"
+cat << EOF > "$main_dir/Helpers/assets.csv"
 Email,Names,Attendance Count,Absence Count
 alice@example.com,Alice Johnson,14,1
 bob@example.com,Bob Smith,7,8
@@ -118,7 +108,7 @@ charlie@example.com,Charlie Davis,4,11
 diana@example.com,Diana Prince,15,0
 EOF
 
-cat << EOF > "$BASE_DIR/Helpers/config.json"
+cat << EOF > "$main_dir/Helpers/config.json"
 {
     "thresholds": {
         "warning": 75,
@@ -130,7 +120,7 @@ cat << EOF > "$BASE_DIR/Helpers/config.json"
 
 EOF
 
-cat << EOF > "$BASE_DIR/reports/reports.log"
+cat << EOF > "$main_dir/reports/reports.log"
 --- Attendance Report Run: 2026-02-06 18:10:01.468726 ---
 [2026-02-06 18:10:01.469363] ALERT SENT TO bob@example.com: URGENT: Bob Smith, your attendance is 46.7%. You will fail this class.
 [2026-02-06 18:10:01.469424] ALERT SENT TO charlie@example.com: URGENT: Charlie Davis, your attendance is 26.7%. You will fail this class.
@@ -138,15 +128,62 @@ cat << EOF > "$BASE_DIR/reports/reports.log"
 
 EOF
 
-#Task 2: Dynamic Configuration
-echo "Insert new warning value:" 
-read a
-echo "Insert new Failure value:"
-read b
+#Checking Directory structure
 
-echo "Replacing values..."
-sed -i "s/75/$a/" "$BASE_DIR/Helpers/config.json"
-sed -i "s/50/$b/" "$BASE_DIR/Helpers/config.json"
+echo "Checking directory structure ..."
+
+if [ -f "$main_dir/attendance_checker.py" ] &&
+   [ -f "$main_dir/Helpers/assets.csv" ] &&
+   [ -f "$main_dir/Helpers/config.json" ] &&
+   [ -f "$main_dir/reports/reports.log" ]; then
+
+    echo "Project setup successfull!"
+else
+    echo "Project setup failed! Incorrect directory structure."
+fi
+
+#Dynamic Configuration
+
+#Asking user if they want to update threshold values
+while true; do
+	read -p "Do you want to update attendance threshold values? (y/n): " resp
+	if [[ "$resp" = [Yy] ]]; then
+		#Updating warning value
+		while true; do
+		echo "default warning threshold is 75%, press enter to keep default"
+		read -p "Enter new warning threshold:" a
+                a=${a:-75} 
+		if [[ "$a" =~ ^[0-9]+$ ]] && [[ "$a" -ge 0 && "$a" -le 100 ]]; then
+			break
+		else
+			echo "Value must be between 0 and 100!!"
+                fi
+	done
+	       #Updating failure value
+	       while true; do
+	       echo "Default failure threshold is 50%, press enter to keep default"
+	       read -p "Enter new failure threshold:" b
+	       b=${b:-50} 
+	       if [[ "$b" =~ ^[0-9]+$ ]] && [[ "$b" -ge 0 && "$b" -le 100 ]]; then
+		       break
+	       else
+		       echo "Value must be between 0 and 100!!"
+		fi
+	done
+	break
+elif [[ "$resp" = [Nn] ]]; then
+        echo "Values will remain the same!"
+        break
+    else
+        echo "You must chose y or n!!"
+    fi
+done
+
+#Updating Values
+
+sed -i "s/\"warning\": [0-9]\+/\"warning\": $a/" "$main_dir/Helpers/config.json"
+sed -i "s/\"failure\": [0-9]\+/\"failure\": $b/" "$main_dir/Helpers/config.json"
+
 
 echo "Values successfully replaced:"
 
