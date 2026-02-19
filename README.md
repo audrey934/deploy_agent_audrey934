@@ -5,7 +5,7 @@ The following script acts as a shell factory; it automates the creation of a wor
 Here is an overview of the script's operations:
 
 1. Checks if Python3 is installed and prints a warning if it is not
-2. Prompts user to enter project name
+2. Prompts user to enter project name. If the user enters the name of an existing directory, they are prompted to enter a new name.
 3. Create the required directories and files:
    attendance_checker.py
    Helpers/assets.csv
