@@ -24,8 +24,6 @@ while [ -d "$main_dir" ]; do
     main_dir="attendance_tracker_$name"
 done
 
-mkdir -p "$main_dir"
-
 #Setting the signal trap
 trap ctrl_c INT
 
